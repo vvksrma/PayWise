@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Fund Transfer</h2>
+<form method="POST">
+    <input type="number" name="amount" placeholder="Amount" required>
+    <button type="submit">Transfer</button>
+</form>
+{% endblock %}

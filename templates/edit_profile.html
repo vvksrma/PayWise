@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="center-container">
+    <div class="edit-profile-page">
+        <form method="POST">
+            <h2>Edit Profile</h2>
+            <div>
+                <label>Full Name:</label>
+                <input type="text" value="{{ user.full_name }}" disabled>
+            </div>
+            <div>
+                <label>Account Number:</label>
+                <input type="text" value="{{ user.account_number }}" disabled>
+            </div>
+            <div>
+                <label>Customer ID:</label>
+                <input type="text" value="{{ user.customer_id }}" disabled>
+            </div>
+            <div>
+                <label>Email:</label>
+                <input type="email" name="email" value="{{ user.email }}" required>
+            </div>
+            <div>
+                <label>Mobile Number:</label>
+                <input type="text" name="mobile_number" value="{{ user.mobile_number }}" required>
+            </div>
+            <button type="submit">Update</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="index-page">
+    <div class="hero-section">
+        <div class="container">
+            <h1 class="hero-title">Welcome to PayWise Secure Banking App</h1>
+            <p class="hero-subtitle">
+                Manage your accounts, track transactions, and transfer funds seamlessly.
+            </p>
+            <div class="hero-actions">
+                <a href="/login" class="btn btn-primary">Login</a>
+                <a href="/register" class="btn btn-secondary">Register</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="features-section">
+        <div class="container">
+            <h2 class="section-title">Why Choose Our Banking App?</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <img src="/static/images/secure.png" alt="Secure Transactions" class="card-img">
+                    <h3 class="card-title">Secure Transactions</h3>
+                    <p class="card-text">
+                        Your data and transactions are protected with the latest security measures.
+                    </p>
+                </div>
+                <div class="card">
+                    <img src="/static/images/easy.png" alt="User-Friendly Interface" class="card-img">
+                    <h3 class="card-title">User-Friendly Interface</h3>
+                    <p class="card-text">
+                        Intuitive and simple design ensures a smooth experience for all users.
+                    </p>
+                </div>
+                <div class="card">
+                    <img src="/static/images/support.png" alt="24/7 Support" class="card-img">
+                    <h3 class="card-title">24/7 Support</h3>
+                    <p class="card-text">
+                        Our team is available round-the-clock to assist with your needs.
+                    </p>
+                </div>
+            </div>
+            <p class="additional-info">
+                With our app, you can stay on top of your finances wherever you are. Whether it's transferring money, paying bills,
+                or checking your balance, we've got you covered. Join thousands of satisfied users and experience the future of banking today!
+            </p>
+        </div>
+    </div>
+
+
+</div>
+{% endblock %}

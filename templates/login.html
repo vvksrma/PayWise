@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="center-container">
+    <div class="login-page">
+        <form method="POST">
+            <h2>Login</h2>
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+            <p>Don't have an account? <a href="{{ url_for('register') }}">Sign up</a></p>
+            <p>Forgot Password? <a href="{{ url_for('forgot_password') }}">Reset Password</a></p>
+            <p>Forgot Username? <a href="{{ url_for('forgot_username') }}">Reset Username</a></p>
+        </form>
+    </div>
+</div>
+{% endblock %}

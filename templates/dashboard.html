@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container dashboard">
+    <h1>Welcome, {{ user.username }}!</h1>
+    <p>Your current balance: ₹{{ user.balance }}</p>
+
+    <h2>Your Features</h2>
+
+    <div class="features-grid">
+        <!-- Account Information Section -->
+        <div class="card">
+            <div class="card-header">
+                <strong>Account Information</strong>
+            </div>
+            <div class="card-body">
+                <p><strong>Full Name: </strong>{{ user.full_name }}</p>
+                <p><strong>Email: </strong>{{ user.email }}</p>
+                <p><strong>Account Number: </strong>
+                    <span id="account-number">{{ user.account_number[:-4] }}****</span>
+                    <button type="button" id="toggle-account" class="btn btn-sm btn-info">Show</button>
+                </p>
+                <p><strong>Customer ID: </strong>
+                    <span id="customer-id">{{ user.customer_id[:-4] }}****</span>
+                    <button type="button" id="toggle-customer-id" class="btn btn-sm btn-info">Show</button>
+                </p>
+                <a href="{{ url_for('edit_profile') }}" class="btn btn-primary">Edit Profile</a>
+            </div>
+        </div>
+
+        <!-- Withdraw Money Form -->
+        <div class="card">
+            <div class="card-header">
+                <strong>Withdraw Money</strong>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="form-group">
+                        <label for="amount">Amount:</label>
+                        <input type="number" name="amount" id="amount" class="input-field" required>
+                    </div>
+                    <button type="submit" name="withdraw" class="btn withdraw-btn">Withdraw</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Transfer Money Form -->
+        <div class="card">
+            <div class="card-header">
+                <strong>Transfer Money</strong>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="form-group">
+                        <label for="recipient">Recipient Username:</label>
+                        <input type="text" name="recipient" id="recipient" class="input-field" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="amount">Amount:</label>
+                        <input type="number" name="amount" id="amount" class="input-field" required>
+                    </div>
+                    <button type="submit" name="transfer" class="btn transfer-btn">Transfer</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Request Money Form -->
+        <div class="card">
+            <div class="card-header">
+                <strong>Request Money</strong>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="form-group">
+                        <label for="recipient">Recipient Username:</label>
+                        <input type="text" name="recipient" id="request-recipient" class="input-field" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="amount">Amount:</label>
+                        <input type="number" name="amount" id="request-amount" class="input-field" required>
+                    </div>
+                    <button type="submit" name="request_money" class="btn request-btn">Request Money</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction History -->
+    <h2>Your Transactions</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Timestamp</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for transaction in transactions %}
+            <tr>
+                <td>{{ transaction.type.capitalize() }}</td>
+                <td class="transaction-amount {% if transaction.type == 'credit' %}text-success{% else %}text-danger{% endif %}">
+                    {% if transaction.type == 'credit' %}+{% else %}-{% endif %}₹{{ transaction.amount }}
+                </td>
+                <td>{{ transaction.timestamp }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3">No transactions available.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Money Request History / Notifications -->
+    <h2>Money Request History</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Sender</th>
+                <th>Amount</th>
+                <th>Timestamp</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in money_requests %}
+            <tr>
+                <td>{{ request.sender.username }}</td>
+                <td>₹{{ request.amount }}</td>
+                <td>{{ request.timestamp }}</td>
+                <td>{{ request.status.capitalize() }}</td>
+                <td>
+                    {% if request.status == 'pending' %}
+                    <button class="btn btn-success" onclick="showApproveModal('{{ request.id }}')">Approve</button>
+                    <button class="btn btn-danger" onclick="declineRequest('{{ request.id }}')">Decline</button>
+                    {% elif request.status == 'approved' %}
+                    Request Approved
+                    {% else %}
+                    Request Declined
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5">No money requests found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Approve Confirmation Modal -->
+<div id="approveModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeApproveModal()">&times;</span>
+        <p>Are you sure you want to approve this request?</p>
+        <button id="confirmApproveBtn" class="btn btn-success">Confirm</button>
+        <button class="btn btn-secondary" onclick="closeApproveModal()">Cancel</button>
+    </div>
+</div>
+
+<!-- JavaScript to handle the modal and AJAX requests -->
+<script>
+    let requestToApprove = null;
+
+    function showApproveModal(requestId) {
+        requestToApprove = requestId;
+        document.getElementById('approveModal').style.display = 'block';
+    }
+
+    function closeApproveModal() {
+        requestToApprove = null;
+        document.getElementById('approveModal').style.display = 'none';
+    }
+
+    document.getElementById('confirmApproveBtn').addEventListener('click', function() {
+        if (requestToApprove) {
+            fetch(`/approve_request/${requestToApprove}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ action: 'approve' })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Request approved.');
+                    location.reload(); // Reload the page to update the request status
+                } else {
+                    alert('Error approving request.');
+                }
+                closeApproveModal();
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    });
+
+    function declineRequest(requestId) {
+        fetch(`/decline_request/${requestId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ action: 'decline' })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Request declined.');
+                location.reload(); // Reload the page to update the request status
+            } else {
+                alert('Error declining request.');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+</script>
+{% endblock %}
