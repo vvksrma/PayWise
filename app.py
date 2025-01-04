@@ -59,6 +59,7 @@ class Transaction(db.Model):
     amount = db.Column(db.Float, nullable=False)
     type = db.Column(db.String(10), nullable=False)  # 'debit', 'credit'
     timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
+    remarks = db.Column(db.String(255))
 
     user = db.relationship('User', back_populates='transactions')
 
@@ -73,7 +74,8 @@ class MoneyRequest(db.Model):
     amount = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(10), default='pending')  # 'pending', 'approved', 'declined'
     timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
-
+    remarks = db.Column(db.String(255))
+    
     sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_requests')
     recipient = db.relationship('User', foreign_keys=[recipient_id], backref='received_requests')
 
@@ -204,16 +206,18 @@ def dashboard():
     if request.method == 'POST':
         if 'withdraw' in request.form:
             amount = float(request.form.get('amount'))
+            remarks = request.form.get('remarks')
             if current_user.balance < amount:
                 flash('Insufficient funds.', 'error')
             else:
                 current_user.balance -= amount
-                db.session.add(Transaction(user_id=current_user.id, amount=amount, type='debit'))
+                db.session.add(Transaction(user_id=current_user.id, amount=amount, type='debit', remarks=remarks))
                 db.session.commit()
                 flash(f'Withdrew ₹{amount} successfully.', 'success')
         elif 'transfer' in request.form:
             recipient_username = request.form.get('recipient')
             amount = float(request.form.get('amount'))
+            remarks = request.form.get('remarks')
             recipient = User.query.filter_by(username=recipient_username).first()
             if not recipient:
                 flash('Recipient does not exist.', 'error')
@@ -222,18 +226,19 @@ def dashboard():
             else:
                 current_user.balance -= amount
                 recipient.balance += amount
-                db.session.add(Transaction(user_id=current_user.id, amount=amount, type='debit'))
-                db.session.add(Transaction(user_id=recipient.id, amount=amount, type='credit'))
+                db.session.add(Transaction(user_id=current_user.id, amount=amount, type='debit', remarks=remarks))
+                db.session.add(Transaction(user_id=recipient.id, amount=amount, type='credit', remarks=remarks))
                 db.session.commit()
                 flash(f'Transferred ₹{amount} to {recipient_username}.', 'success')
         elif 'request_money' in request.form:
             recipient_username = request.form.get('recipient')
             amount = float(request.form.get('amount'))
+            remarks = request.form.get('remarks')
             recipient = User.query.filter_by(username=recipient_username).first()
             if not recipient:
                 flash('Recipient does not exist.', 'error')
             else:
-                money_request = MoneyRequest(sender_id=current_user.id, recipient_id=recipient.id, amount=amount)
+                money_request = MoneyRequest(sender_id=current_user.id, recipient_id=recipient.id, amount=amount, remarks=remarks)
                 db.session.add(money_request)
                 db.session.commit()
                 flash(f'Requested ₹{amount} from {recipient_username}.', 'info')
@@ -316,5 +321,5 @@ def logout():
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()  # Ensure database is initialized
+        db.create_all()
     app.run(debug=True)

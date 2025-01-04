@@ -7,8 +7,15 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <nav>
-        <div class="container">
+    <nav class="navbar">
+    <div class="container">
+        <a href="{{ url_for('home') }}" class="navbar-brand">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="PayWise Logo" class="logo">
+        </a>
+        <button class="navbar-toggler" id="navbar-toggler">
+            <span class="navbar-toggler-icon">&#9776;</span>
+        </button>
+        <div class="navbar-menu" id="navbar-menu">
             <a href="{{ url_for('home') }}">Home</a>
             {% if current_user.is_authenticated %}
                 <a href="{{ url_for('dashboard') }}">Dashboard</a>
@@ -19,7 +26,24 @@
                 <a href="{{ url_for('register') }}">Register</a>
             {% endif %}
         </div>
-    </nav>
+    </div>
+</nav>
+
+<!-- Chat button -->
+<button id="chat-button" class="chat-button">Chat with AI</button>
+
+<!-- Chat popup -->
+<div id="chat-popup" class="chat-popup">
+    <div class="chat-header">
+        <span class="chat-title">AI Assistant</span>
+        <button id="close-chat" class="close-chat">&times;</button>
+    </div>
+    <div id="chat-box" class="chat-box"></div>
+    <input type="text" id="user-input" class="input-box" placeholder="Type your message...">
+    <button id="send-button" class="send-button">Send</button>
+</div>
+
+<script src="{{ url_for('static', filename='scripts.js') }}"></script>
 
     <div class="container">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -49,6 +73,15 @@
             </div>
         </div>
     </footer>
-    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggler = document.getElementById('navbar-toggler');
+            const menu = document.getElementById('navbar-menu');
+
+            toggler.addEventListener('click', function() {
+                menu.classList.toggle('show');
+            });
+        });
+    </script>
 </body>
 </html>
