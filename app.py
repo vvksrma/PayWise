@@ -1,8 +1,5 @@
 import random
 import string
-import matplotlib
-matplotlib.use('Agg')  # Use Agg backend for Matplotlib
-import matplotlib.pyplot as plt
 import io
 import base64
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
@@ -39,51 +36,7 @@ def generate_customer_id():
 
 @login_manager.user_loader
 def load_user(user_id):
-    with db.session() as session:
-        return session.get(User, int(user_id))
-
-def generate_transaction_trend_graph(user_id):
-    # Fetch transactions for the user from the database
-    transactions = Transaction.query.filter_by(user_id=user_id).order_by(Transaction.timestamp).all()
-
-    # Data to be plotted
-    dates = []
-    balances = []
-    balance = 0  # Initial balance
-
-    for transaction in transactions:
-        dates.append(transaction.timestamp.strftime('%Y-%m-%d'))
-        if transaction.type == 'credit':
-            balance += transaction.amount
-        else:  # debit
-            balance -= transaction.amount
-        balances.append(balance)
-
-    # Create the plot
-    plt.figure(figsize=(10, 6))
-    
-    # Plot the balance over time with markers
-    plt.plot(dates, balances, label='Balance over time', color='blue', marker='o')
-
-    # Adding annotations to each point
-    for i, txt in enumerate(balances):
-        plt.annotate(f'{txt:.2f}', (dates[i], balances[i]), textcoords="offset points", xytext=(0,10), ha='center')
-
-    plt.xticks(rotation=45)
-    plt.xlabel('Date', fontsize=14)
-    plt.ylabel('Balance (₹)', fontsize=14)
-    plt.title('Your Account Balance Over Time', fontsize=16)
-    plt.grid(True)
-    plt.legend()
-
-    # Convert the plot to a PNG image and encode it to base64
-    img = io.BytesIO()
-    plt.savefig(img, format='png')
-    img.seek(0)
-    img_b64 = base64.b64encode(img.getvalue()).decode('utf-8')
-    plt.close()  # Close the plot to free up resources
-
-    return img_b64
+    return User.query.get(int(user_id))
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -199,9 +152,7 @@ def forgot_password():
         user = User.query.filter_by(email=email).first()
         if user:
             token = s.dumps(email, salt='password-reset')
-            # You would normally send the email here, but for simplicity, we'll just flash the token
             flash(f'Reset token (for demo purposes): {token}', 'info')
-            # send_email(user.email, 'Password Reset Request', 'reset_password', user=user, token=token)
             flash('An email with instructions to reset your password has been sent to you.', 'info')
         else:
             flash('No account with that email address exists.', 'error')
@@ -308,9 +259,7 @@ def dashboard():
 @app.route('/balance_graph', methods=['GET'])
 @login_required
 def balance_graph():
-    # Generate the balance graph for the logged-in user
-    img_b64 = generate_transaction_trend_graph(current_user.id)
-    return render_template('balance_graph.html', img_data=img_b64)
+    return render_template('balance_graph.html')
 
 @app.route('/approve_request/<int:request_id>', methods=['POST'])
 @login_required
@@ -392,34 +341,34 @@ def chat():
 def filter_transactions():
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
-    filtered_transactions = Transaction.query.filter(Transaction.user_id == current_user.id, Transaction.timestamp >= start_date, Transaction.timestamp <= end_date).all()
-    transactions = [{'type': t.type, 'amount': t.amount, 'timestamp': t.timestamp.strftime('%Y-%m-%d %H:%M:%S'), 'remarks': t.remarks} for t in filtered_transactions]
-    return jsonify({'transactions': transactions})
+    transactions = Transaction.query.filter(Transaction.user_id == current_user.id, Transaction.timestamp >= start_date, Transaction.timestamp <= end_date).all()
+    response = [{'type': t.type, 'amount': t.amount, 'timestamp': t.timestamp.strftime('%Y-%m-%d %H:%M:%S'), 'remarks': t.remarks} for t in transactions]
+    return jsonify(transactions=response)
 
 @app.route('/filter_requests')
 @login_required
 def filter_requests():
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
-    filtered_requests = MoneyRequest.query.filter(MoneyRequest.recipient_id == current_user.id, MoneyRequest.timestamp >= start_date, MoneyRequest.timestamp <= end_date).all()
-    requests = [{'id': r.id, 'sender': {'username': r.sender.username}, 'amount': r.amount, 'timestamp': r.timestamp.strftime('%Y-%m-%d %H:%M:%S'), 'status': r.status, 'remarks': r.remarks} for r in filtered_requests]
-    return jsonify({'requests': requests})
+    money_requests = MoneyRequest.query.filter(MoneyRequest.recipient_id == current_user.id, MoneyRequest.timestamp >= start_date, MoneyRequest.timestamp <= end_date).all()
+    response = [{'sender': r.sender.username, 'amount': r.amount, 'timestamp': r.timestamp.strftime('%Y-%m-%d %H:%M:%S'), 'status': r.status, 'remarks': r.remarks, 'id': r.id} for r in money_requests]
+    return jsonify(requests=response)
 
 @app.route('/load_more_transactions')
 @login_required
 def load_more_transactions():
     offset = int(request.args.get('offset'))
-    more_transactions = Transaction.query.filter_by(user_id=current_user.id).offset(offset).limit(8).all()
-    transactions = [{'type': t.type, 'amount': t.amount, 'timestamp': t.timestamp.strftime('%Y-%m-%d %H:%M:%S'), 'remarks': t.remarks} for t in more_transactions]
-    return jsonify({'transactions': transactions})
+    transactions = Transaction.query.filter_by(user_id=current_user.id).offset(offset).limit(8).all()
+    response = [{'type': t.type, 'amount': t.amount, 'timestamp': t.timestamp.strftime('%Y-%m-%d %H:%M:%S'), 'remarks': t.remarks} for t in transactions]
+    return jsonify(transactions=response)
 
 @app.route('/load_more_requests')
 @login_required
 def load_more_requests():
     offset = int(request.args.get('offset'))
-    more_requests = MoneyRequest.query.filter_by(recipient_id=current_user.id).offset(offset).limit(8).all()
-    requests = [{'id': r.id, 'sender': {'username': r.sender.username}, 'amount': r.amount, 'timestamp': r.timestamp.strftime('%Y-%m-%d %H:%M:%S'), 'status': r.status, 'remarks': r.remarks} for r in more_requests]
-    return jsonify({'requests': requests})
+    money_requests = MoneyRequest.query.filter_by(recipient_id=current_user.id).offset(offset).limit(8).all()
+    response = [{'sender': r.sender.username, 'amount': r.amount, 'timestamp': r.timestamp.strftime('%Y-%m-%d %H:%M:%S'), 'status': r.status, 'remarks': r.remarks, 'id': r.id} for r in money_requests]
+    return jsonify(requests=response)
 
 if __name__ == '__main__':
     with app.app_context():
