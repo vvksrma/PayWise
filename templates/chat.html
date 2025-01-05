@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with AI</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='chat.css') }}">
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>Chat with AI</h2>
+            <button class="close-btn" onclick="window.location.href='/'">X</button>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <!-- Instruction Message -->
+            <div class="chat-message instruction">
+                <p>Welcome to the AI Chatbot! Here are some instructions to get you started:</p>
+                <ul>
+                    <li>Type your message in the input box below and press Enter or click the Send button.</li>
+                    <li>The AI chatbot can help you with programming questions, provide code examples, and explain concepts.</li>
+                    <li>Feel free to ask about different programming languages, frameworks, and best practices.</li>
+                </ul>
+                <p>What would you like to know or discuss today?</p>
+            </div>
+            <!-- Messages will appear here -->
+        </div>
+        <div class="chat-input">
+            <input type="text" id="chat-input" placeholder="Type your message...">
+            <button id="send-btn">Send</button>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='chat.js') }}"></script>
+</body>
+</html>

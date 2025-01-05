@@ -21,6 +21,7 @@
                 <a href="{{ url_for('dashboard') }}">Dashboard</a>
                 <a href="{{ url_for('edit_profile') }}">Profile</a>
                 <a href="{{ url_for('logout') }}">Logout</a>
+                <a href="{{ url_for('chat') }}" class="chat-btn">Chat with AI</a>
             {% else %}
                 <a href="{{ url_for('login') }}">Login</a>
                 <a href="{{ url_for('register') }}">Register</a>
@@ -28,22 +29,6 @@
         </div>
     </div>
 </nav>
-
-<!-- Chat button -->
-<button id="chat-button" class="chat-button">Chat with AI</button>
-
-<!-- Chat popup -->
-<div id="chat-popup" class="chat-popup">
-    <div class="chat-header">
-        <span class="chat-title">AI Assistant</span>
-        <button id="close-chat" class="close-chat">&times;</button>
-    </div>
-    <div id="chat-box" class="chat-box"></div>
-    <input type="text" id="user-input" class="input-box" placeholder="Type your message...">
-    <button id="send-button" class="send-button">Send</button>
-</div>
-
-<script src="{{ url_for('static', filename='scripts.js') }}"></script>
 
     <div class="container">
         {% with messages = get_flashed_messages(with_categories=true) %}

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+
 {% block content %}
 <div class="container dashboard">
     <h1>Welcome, {{ user.username }}!</h1>
@@ -94,11 +95,35 @@
                 </form>
             </div>
         </div>
+
+        <!-- Embedded Transaction Trend Graph -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Transaction Trend Graph</h3>
+                <button id="minimizeGraphBtn" class="btn btn-sm btn-secondary">Minimize</button>
+                <button id="maximizeGraphBtn" class="btn btn-sm btn-secondary" style="display: none;">Maximize</button>
+            </div>
+            <div id="graphContent" class="card-body">
+                <p class="card-text">
+                    Here is your transaction trend graph:
+                </p>
+                <div class="chart-container">
+                    <canvas id="transactionTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Transaction History -->
     <h2>Your Transactions</h2>
-    <table class="table">
+    <div class="filters">
+        <label for="transaction-start-date">Start Date:</label>
+        <input type="date" id="transaction-start-date">
+        <label for="transaction-end-date">End Date:</label>
+        <input type="date" id="transaction-end-date">
+        <button id="filter-transactions" class="btn btn-primary">Filter</button>
+    </div>
+    <table class="table" id="transaction-table">
         <thead>
             <tr>
                 <th>Type</th>
@@ -107,8 +132,8 @@
                 <th>Remarks</th>
             </tr>
         </thead>
-        <tbody>
-            {% for transaction in transactions %}
+        <tbody id="transaction-body">
+            {% for transaction in transactions[:8] %}
             <tr>
                 <td>{{ transaction.type.capitalize() }}</td>
                 <td class="transaction-amount {% if transaction.type == 'credit' %}text-success{% else %}text-danger{% endif %}">
@@ -117,17 +142,23 @@
                 <td>{{ transaction.timestamp }}</td>
                 <td>{{ transaction.remarks }}</td>
             </tr>
-            {% else %}
-            <tr>
-                <td colspan="4">No transactions available.</td>
-            </tr>
             {% endfor %}
         </tbody>
     </table>
+    {% if transactions|length > 8 %}
+    <button id="load-more-transactions" class="btn btn-secondary">Load More</button>
+    {% endif %}
 
-    <!-- Money Request History / Notifications -->
+    <!-- Money Request History -->
     <h2>Money Request History</h2>
-    <table class="table">
+    <div class="filters">
+        <label for="request-start-date">Start Date:</label>
+        <input type="date" id="request-start-date">
+        <label for="request-end-date">End Date:</label>
+        <input type="date" id="request-end-date">
+        <button id="filter-requests" class="btn btn-primary">Filter</button>
+    </div>
+    <table class="table" id="request-table">
         <thead>
             <tr>
                 <th>Sender</th>
@@ -138,8 +169,8 @@
                 <th>Action</th>
             </tr>
         </thead>
-        <tbody>
-            {% for request in money_requests %}
+        <tbody id="request-body">
+            {% for request in money_requests[:8] %}
             <tr>
                 <td>{{ request.sender.username }}</td>
                 <td>₹{{ request.amount }}</td>
@@ -157,13 +188,12 @@
                     {% endif %}
                 </td>
             </tr>
-            {% else %}
-            <tr>
-                <td colspan="6">No money requests found.</td>
-            </tr>
             {% endfor %}
         </tbody>
     </table>
+    {% if money_requests|length > 8 %}
+    <button id="load-more-requests" class="btn btn-secondary">Load More</button>
+    {% endif %}
 </div>
 
 <!-- Approve Confirmation Modal -->
@@ -176,9 +206,14 @@
     </div>
 </div>
 
+<!-- Include Chart.js library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <!-- JavaScript to handle the modal and AJAX requests -->
 <script>
     let requestToApprove = null;
+    let transactionOffset = 8;
+    let requestOffset = 8;
 
     function showApproveModal(requestId) {
         requestToApprove = requestId;
@@ -233,7 +268,6 @@
         .catch(error => console.error('Error:', error));
     }
 
-    // JavaScript to handle toggling account number and customer ID visibility
     document.getElementById('toggle-account').addEventListener('click', function() {
         const accountNumberElement = document.getElementById('account-number');
         if (accountNumberElement.textContent.includes('****')) {
@@ -255,5 +289,207 @@
             this.textContent = 'Show';
         }
     });
-</script>
+
+    // JavaScript to render the transaction trend graph using Chart.js
+    const ctx = document.getElementById('transactionTrendChart').getContext('2d');
+    const transactionTrendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ dates | safe }},
+            datasets: [{
+                label: 'Balance Over Time',
+                data: {{ balances | safe }},
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderWidth: 1,
+                fill: true,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointBackgroundColor: 'rgba(75, 192, 192, 1)'
+            }]
+        },
+        options: {
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date',
+                        font: {
+                            size: 14
+                        }
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Balance (₹)',
+                        font: {
+                            size: 14
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // JavaScript to handle minimizing and maximizing the graph section
+    document.getElementById('minimizeGraphBtn').addEventListener('click', function() {
+        document.getElementById('graphContent').style.display = 'none';
+        document.getElementById('minimizeGraphBtn').style.display = 'none';
+        document.getElementById('maximizeGraphBtn').style.display = 'block';
+    });
+
+    document.getElementById('maximizeGraphBtn').addEventListener('click', function() {
+        document.getElementById('graphContent').style.display = 'block';
+        document.getElementById('minimizeGraphBtn').style.display = 'block';
+        document.getElementById('maximizeGraphBtn').style.display = 'none';
+    });
+
+    // JavaScript to handle transaction filtering and loading more transactions
+    document.getElementById('filter-transactions').addEventListener('click', function() {
+        const startDate = document.getElementById('transaction-start-date').value;
+        const endDate = document.getElementById('transaction-end-date').value;
+        filterTransactions(startDate, endDate);
+    });
+
+    document.getElementById('filter-requests').addEventListener('click', function() {
+        const startDate = document.getElementById('request-start-date').value;
+        const endDate = document.getElementById('request-end-date').value;
+        filterRequests(startDate, endDate);
+    });
+
+    document.getElementById('load-more-transactions').addEventListener('click', function() {
+        loadMoreTransactions();
+    });
+
+    document.getElementById('load-more-requests').addEventListener('click', function() {
+        loadMoreRequests();
+    });
+
+    function filterTransactions(startDate, endDate) {
+        fetch(`/filter_transactions?start_date=${startDate}&end_date=${endDate}`)
+        .then(response => response.json())
+        .then(data => {
+            const transactionBody = document.getElementById('transaction-body');
+            transactionBody.innerHTML = '';
+            data.transactions.forEach(transaction => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${transaction.type.capitalize()}</td>
+                    <td class="transaction-amount ${transaction.type == 'credit' ? 'text-success' : 'text-danger'}">
+                        ${transaction.type == 'credit' ? '+' : '-'}₹${transaction.amount}
+                    </td>
+                    <td>${transaction.timestamp}</td>
+                    <td>${transaction.remarks}</td>
+                `;
+                transactionBody.appendChild(row);
+            });
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function filterRequests(startDate, endDate) {
+        fetch(`/filter_requests?start_date=${startDate}&end_date=${endDate}`)
+        .then(response => response.json())
+        .then(data => {
+            const requestBody = document.getElementById('request-body');
+            requestBody.innerHTML = '';
+            data.requests.forEach(request => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${request.sender.username}</td>
+                    <td>₹${request.amount}</td>
+                    <td>${request.timestamp}</td>
+                    <td>${request.status.capitalize()}</td>
+                    <td>${request.remarks}</td>
+                    <td>
+                        ${request.status == 'pending' ? `
+                            <button class="btn btn-success" onclick="showApproveModal('${request.id}')">Approve</button>
+                            <button class="btn btn-danger" onclick="declineRequest('${request.id}')">Decline</button>
+                        ` : request.status == 'approved' ? 'Request Approved' : 'Request Declined'}
+                    </td>
+                `;
+                requestBody.appendChild(row);
+            });
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function loadMoreTransactions() {
+        fetch(`/load_more_transactions?offset=${transactionOffset}`)
+        .then(response => response.json())
+        .then(data => {
+            const transactionBody = document.getElementById('transaction-body');
+            data.transactions.forEach(transaction => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${transaction.type.capitalize()}</td>
+                    <td class="transaction-amount ${transaction.type == 'credit' ? 'text-success' : 'text-danger'}">
+                        ${transaction.type == 'credit' ? '+' : '-'}₹${transaction.amount}
+                    </td>
+                    <td>${transaction.timestamp}</td>
+                    <td>${transaction.remarks}</td>
+                `;
+                transactionBody.appendChild(row);
+            });
+            transactionOffset += data.transactions.length;
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function loadMoreRequests() {
+        fetch(`/load_more_requests?offset=${requestOffset}`)
+        .then(response => response.json())
+        .then(data => {
+            const requestBody = document.getElementById('request-body');
+            data.requests.forEach(request => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${request.sender.username}</td>
+                    <td>₹${request.amount}</td>
+                    <td>${request.timestamp}</td>
+                    <td>${request.status.capitalize()}</td>
+                    <td>${request.remarks}</td>
+                    <td>
+                        ${request.status == 'pending' ? `
+                            <button class="btn btn-success" onclick="showApproveModal('${request.id}')">Approve</button>
+                            <button class="btn btn-danger" onclick="declineRequest('${request.id}')">Decline</button>
+                        ` : request.status == 'approved' ? 'Request Approved' : 'Request Declined'}
+                    </td>
+                `;
+                requestBody.appendChild(row);
+            });
+            requestOffset += data.requests.length;
+        })
+        .catch(error => console.error('Error:', error));
+    }
+</script
+
+<!-- Custom CSS to control the size and layout of the canvas element -->
+<style>
+    .chart-container {
+        position: relative;
+        height: 400px;
+        width: 100%;
+    }
+
+    .card {
+        margin-bottom: 20px;
+    }
+
+    .btn-sm {
+        margin-left: 10px;
+        font-size: 0.875rem;
+        padding: 0.25rem 0.5rem;
+    }
+</style>
+
 {% endblock %}
