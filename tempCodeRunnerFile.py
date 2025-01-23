@@ -2,15 +2,13 @@ import random
 import string
 import io
 import base64
-import os
-from datetime import datetime
-from werkzeug.utils import secure_filename
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
 from sqlalchemy import CheckConstraint, UniqueConstraint
+from sqlalchemy.orm import Session
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadTimeSignature
 
 app = Flask(__name__)
@@ -50,17 +48,16 @@ class User(db.Model, UserMixin):
     balance = db.Column(db.Float, default=100000.0)  # Set initial balance to ₹100,000
     account_number = db.Column(db.String(12), unique=True, nullable=False, default=generate_account_number)
     customer_id = db.Column(db.String(6), unique=True, nullable=False, default=generate_customer_id)
-    dob = db.Column(db.Date, nullable=True)  # Date of Birth column
-    profile_picture = db.Column(db.String(200), nullable=True)  # Profile Picture column
-    transactions = db.relationship('Transaction', back_populates='user', lazy=True)
 
     __table_args__ = (
-        UniqueConstraint('account_number', name='uq_account_number'),
-        UniqueConstraint('customer_id', name='uq_customer_id'),
         UniqueConstraint('email', name='uq_user_email'),
         UniqueConstraint('mobile_number', name='uq_user_mobile_number'),
         CheckConstraint('balance >= 0', name='check_user_balance')
     )
+
+    def __repr__(self):
+        return f'<User {self.username}>'
+
 
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -72,14 +69,9 @@ class Transaction(db.Model):
 
     user = db.relationship('User', back_populates='transactions')
 
-class Transfer(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    debit_transaction_id = db.Column(db.Integer, db.ForeignKey('transaction.id'), nullable=False)
-    credit_transaction_id = db.Column(db.Integer, db.ForeignKey('transaction.id'), nullable=False)
-    timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
 
-    debit_transaction = db.relationship('Transaction', foreign_keys=[debit_transaction_id])
-    credit_transaction = db.relationship('Transaction', foreign_keys=[credit_transaction_id])
+User.transactions = db.relationship('Transaction', back_populates='user', lazy='dynamic')
+
 
 class MoneyRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -93,29 +85,20 @@ class MoneyRequest(db.Model):
     sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_requests')
     recipient = db.relationship('User', foreign_keys=[recipient_id], backref='received_requests')
 
+
 @app.route('/')
 def home():
     return render_template('index.html')
 
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        profile_picture_file = request.files.get('profile_picture')
         full_name = request.form.get('full_name')
         username = request.form.get('username')
-        dob = request.form.get('dob')
         email = request.form.get('email')
         mobile_number = request.form.get('mobile_number')
         password = request.form.get('password')
-
-        if profile_picture_file:
-            profile_picture_filename = secure_filename(profile_picture_file.filename)
-            profile_picture_path = os.path.join(app.config['UPLOAD_FOLDER'], profile_picture_filename)
-            profile_picture_file.save(profile_picture_path)
-        else:
-            profile_picture_path = None
-
-        dob_parsed = datetime.strptime(dob, '%Y-%m-%d').date() if dob else None
 
         if User.query.filter_by(username=username).first():
             flash('Username already exists. Please choose another one.', 'error')
@@ -131,10 +114,8 @@ def register():
 
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
         new_user = User(
-            profile_picture=profile_picture_path,
             full_name=full_name,
             username=username,
-            dob=dob_parsed,
             email=email,
             mobile_number=mobile_number,
             password=hashed_password
@@ -145,6 +126,7 @@ def register():
         return redirect(url_for('login'))
 
     return render_template('register.html')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -162,6 +144,7 @@ def login():
 
     return render_template('login.html')
 
+
 @app.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
@@ -174,6 +157,7 @@ def forgot_password():
         else:
             flash('No account with that email address exists.', 'error')
     return render_template('forgot_password.html')
+
 
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
@@ -199,6 +183,7 @@ def reset_password(token):
 
     return render_template('reset_password.html')
 
+
 @app.route('/forgot_username', methods=['GET', 'POST'])
 def forgot_username():
     if request.method == 'POST':
@@ -211,6 +196,7 @@ def forgot_username():
             flash('No account with that email address exists.', 'error')
     return render_template('forgot_username.html')
 
+
 @app.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
@@ -221,15 +207,10 @@ def dashboard():
             if current_user.balance < amount:
                 flash('Insufficient funds.', 'error')
             else:
-                try:
-                    with db.session.begin():
-                        current_user.balance -= amount
-                        db.session.add(Transaction(user_id=current_user.id, amount=amount, type='debit', remarks=remarks))
-                        db.session.commit()
-                    flash(f'Withdrew ₹{amount} successfully.', 'success')
-                except Exception as e:
-                    db.session.rollback()
-                    flash(f'Error during withdrawal: {str(e)}', 'error')
+                current_user.balance -= amount
+                db.session.add(Transaction(user_id=current_user.id, amount=amount, type='debit', remarks=remarks))
+                db.session.commit()
+                flash(f'Withdrew ₹{amount} successfully.', 'success')
         elif 'transfer' in request.form:
             recipient_username = request.form.get('recipient')
             amount = float(request.form.get('amount'))
@@ -240,22 +221,12 @@ def dashboard():
             elif current_user.balance < amount:
                 flash('Insufficient funds.', 'error')
             else:
-                try:
-                    with db.session.begin():
-                        current_user.balance -= amount
-                        recipient.balance += amount
-                        debit_transaction = Transaction(user_id=current_user.id, amount=amount, type='debit', remarks=remarks)
-                        credit_transaction = Transaction(user_id=recipient.id, amount=amount, type='credit', remarks=remarks)
-                        db.session.add(debit_transaction)
-                        db.session.add(credit_transaction)
-                        db.session.commit()
-                        transfer = Transfer(debit_transaction_id=debit_transaction.id, credit_transaction_id=credit_transaction.id)
-                        db.session.add(transfer)
-                        db.session.commit()
-                    flash(f'Transferred ₹{amount} to {recipient_username}.', 'success')
-                except Exception as e:
-                    db.session.rollback()
-                    flash(f'Error during transfer: {str(e)}', 'error')
+                current_user.balance -= amount
+                recipient.balance += amount
+                db.session.add(Transaction(user_id=current_user.id, amount=amount, type='debit', remarks=remarks))
+                db.session.add(Transaction(user_id=recipient.id, amount=amount, type='credit', remarks=remarks))
+                db.session.commit()
+                flash(f'Transferred ₹{amount} to {recipient_username}.', 'success')
         elif 'request_money' in request.form:
             recipient_username = request.form.get('recipient')
             amount = float(request.form.get('amount'))
@@ -269,13 +240,13 @@ def dashboard():
                 db.session.commit()
                 flash(f'Requested ₹{amount} from {recipient_username}.', 'info')
 
-    transactions = Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.timestamp.desc()).all()
+    transactions = Transaction.query.filter_by(user_id=current_user.id).all()
     money_requests = MoneyRequest.query.filter_by(recipient_id=current_user.id).all()
 
     # Data for the interactive graph
     dates = [transaction.timestamp.strftime('%Y-%m-%d') for transaction in transactions]
     balances = []
-    balance = current_user.balance
+    balance = 0
     for transaction in transactions:
         if transaction.type == 'credit':
             balance += transaction.amount
@@ -301,26 +272,17 @@ def approve_request(request_id):
         if current_user.balance < money_request.amount:
             return jsonify({'success': False, 'message': 'Insufficient funds to approve the request.'}), 400
         else:
-            try:
-                with db.session.begin():
-                    current_user.balance -= money_request.amount
-                    money_request.sender.balance += money_request.amount
-                    money_request.status = 'approved'
-                    debit_transaction = Transaction(user_id=current_user.id, amount=money_request.amount, type='debit', remarks=money_request.remarks)
-                    credit_transaction = Transaction(user_id=money_request.sender.id, amount=money_request.amount, type='credit', remarks=money_request.remarks)
-                    db.session.add(debit_transaction)
-                    db.session.add(credit_transaction)
-                    db.session.commit()
-                    transfer = Transfer(debit_transaction_id=debit_transaction.id, credit_transaction_id=credit_transaction.id)
-                    db.session.add(transfer)
-                    db.session.commit()
-                flash('Request approved.', 'success')
-                return jsonify({'success': True, 'message': 'Request approved.'})
-            except Exception as e:
-                db.session.rollback()
-                return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 400
+            current_user.balance -= money_request.amount
+            money_request.sender.balance += money_request.amount
+            money_request.status = 'approved'
+            db.session.add(Transaction(user_id=current_user.id, amount=money_request.amount, type='debit', remarks=money_request.remarks))
+            db.session.add(Transaction(user_id=money_request.sender.id, amount=money_request.amount, type='credit', remarks=money_request.remarks))
+            db.session.commit()
+            flash('Request approved.', 'success')
+            return jsonify({'success': True, 'message': 'Request approved.'})
 
     return jsonify({'success': False, 'message': 'Request not pending.'}), 400
+
 
 @app.route('/decline_request/<int:request_id>', methods=['POST'])
 @login_required
@@ -337,13 +299,13 @@ def decline_request(request_id):
 
     return jsonify({'success': False, 'message': 'Request not pending.'}), 400
 
+
 @app.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
 def edit_profile():
     if request.method == 'POST':
         email = request.form.get('email')
         mobile_number = request.form.get('mobile_number')
-        profile_picture_file = request.files.get('profile_picture')
 
         if User.query.filter(User.email == email, User.id != current_user.id).first():
             flash('Email already exists. Please choose another one.', 'error')
@@ -355,12 +317,12 @@ def edit_profile():
 
         current_user.email = email
         current_user.mobile_number = mobile_number
-        current_user.profile_picture = profile_picture_file.filename if profile_picture_file else current_user.profile_picture
         db.session.commit()
         flash('Profile updated successfully.', 'success')
         return redirect(url_for('dashboard'))
 
     return render_template('edit_profile.html', user=current_user)
+
 
 @app.route('/logout')
 @login_required
@@ -379,7 +341,7 @@ def chat():
 def filter_transactions():
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
-    transactions = Transaction.query.filter(Transaction.user_id == current_user.id, Transaction.timestamp >= start_date, Transaction.timestamp <= end_date).order_by(Transaction.timestamp.desc()).all()
+    transactions = Transaction.query.filter(Transaction.user_id == current_user.id, Transaction.timestamp >= start_date, Transaction.timestamp <= end_date).all()
     response = [{'type': t.type, 'amount': t.amount, 'timestamp': t.timestamp.strftime('%Y-%m-%d %H:%M:%S'), 'remarks': t.remarks} for t in transactions]
     return jsonify(transactions=response)
 
@@ -388,7 +350,7 @@ def filter_transactions():
 def filter_requests():
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
-    money_requests = MoneyRequest.query.filter(MoneyRequest.recipient_id == current_user.id, MoneyRequest.timestamp >= start_date, MoneyRequest.timestamp <= end_date).order_by(MoneyRequest.timestamp.desc()).all()
+    money_requests = MoneyRequest.query.filter(MoneyRequest.recipient_id == current_user.id, MoneyRequest.timestamp >= start_date, MoneyRequest.timestamp <= end_date).all()
     response = [{'sender': r.sender.username, 'amount': r.amount, 'timestamp': r.timestamp.strftime('%Y-%m-%d %H:%M:%S'), 'status': r.status, 'remarks': r.remarks, 'id': r.id} for r in money_requests]
     return jsonify(requests=response)
 
@@ -396,7 +358,7 @@ def filter_requests():
 @login_required
 def load_more_transactions():
     offset = int(request.args.get('offset'))
-    transactions = Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.timestamp.desc()).offset(offset).limit(8).all()
+    transactions = Transaction.query.filter_by(user_id=current_user.id).offset(offset).limit(8).all()
     response = [{'type': t.type, 'amount': t.amount, 'timestamp': t.timestamp.strftime('%Y-%m-%d %H:%M:%S'), 'remarks': t.remarks} for t in transactions]
     return jsonify(transactions=response)
 
@@ -404,7 +366,7 @@ def load_more_transactions():
 @login_required
 def load_more_requests():
     offset = int(request.args.get('offset'))
-    money_requests = MoneyRequest.query.filter_by(recipient_id=current_user.id).order_by(MoneyRequest.timestamp.desc()).offset(offset).limit(8).all()
+    money_requests = MoneyRequest.query.filter_by(recipient_id=current_user.id).offset(offset).limit(8).all()
     response = [{'sender': r.sender.username, 'amount': r.amount, 'timestamp': r.timestamp.strftime('%Y-%m-%d %H:%M:%S'), 'status': r.status, 'remarks': r.remarks, 'id': r.id} for r in money_requests]
     return jsonify(requests=response)
 

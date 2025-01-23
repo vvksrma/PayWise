@@ -1,32 +1,160 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile | PayWise</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container-fluid {
+            height: 100vh;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+        }
+        .edit-profile-page {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        .edit-profile-form {
+            display: flex;
+            flex-direction: column;
+        }
+        .edit-profile-form h2 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .form-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .input-icon {
+            position: absolute;
+            top: 50%;
+            left: 15px;
+            transform: translateY(-50%);
+            color: #888;
+        }
+        .form-group input {
+            padding-left: 45px;
+            height: 45px;
+            border-radius: 25px;
+            border: 1px solid #ddd;
+        }
+        .form-group input[type="file"] {
+            padding-left: 15px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .home-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            z-index: 1000;
+        }
+        .home-button:hover {
+            color: white;
+        }
+        @media (max-width: 767px) {
+            .home-button {
+                color: black;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid position-relative">
+        <!-- Back button -->
+        <a href="{{ url_for('dashboard') }}" class="home-button">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div class="row min-vh-100">
+            <!-- Left side with dark gradient and welcome message -->
+            <div class="col-md-6 d-none d-md-flex align-items-center justify-content-center gradient-bg">
+                <div class="text-center text-white p-5">
+                    <h1 class="display-4">Edit Your Profile</h1>
+                    <p class="lead">Update your personal information and keep your profile up-to-date.</p>
+                </div>
+            </div>
 
-{% block content %}
-<div class="center-container">
-    <div class="edit-profile-page">
-        <form method="POST">
-            <h2>Edit Profile</h2>
-            <div>
-                <label>Full Name:</label>
-                <input type="text" value="{{ user.full_name }}" disabled>
+            <!-- Right side with edit profile form -->
+            <div class="col-md-6 d-flex align-items-center justify-content-center">
+                <div class="edit-profile-page p-4">
+                    <form method="POST" enctype="multipart/form-data" class="edit-profile-form">
+                        <h2 class="mb-4 text-center">Edit Profile</h2>
+                        <div class="form-group mb-4 position-relative">
+                            <label>Profile Photo:</label>
+                            <input type="file" name="profile_photo" accept="image/*" class="form-control">
+                        </div>
+                        <div class="form-group mb-4 position-relative">
+                            <span class="input-icon"><i class="fas fa-user"></i></span>
+                            <input type="text" value="{{ user.full_name }}" class="form-control" disabled>
+                        </div>
+                        <div class="form-group mb-4 position-relative">
+                            <span class="input-icon"><i class="fas fa-id-card"></i></span>
+                            <input type="text" value="{{ user.account_number }}" class="form-control" disabled>
+                        </div>
+                        <div class="form-group mb-4 position-relative">
+                            <span class="input-icon"><i class="fas fa-id-badge"></i></span>
+                            <input type="text" value="{{ user.customer_id }}" class="form-control" disabled>
+                        </div>
+                        <div class="form-group mb-4 position-relative">
+                            <span class="input-icon"><i class="fas fa-envelope"></i></span>
+                            <input type="email" name="email" value="{{ user.email }}" class="form-control" required>
+                        </div>
+                        <div class="form-group mb-4 position-relative">
+                            <span class="input-icon"><i class="fas fa-phone"></i></span>
+                            <input type="text" name="mobile_number" value="{{ user.mobile_number }}" class="form-control" required>
+                        </div>
+                        <div class="form-group mb-4 position-relative">
+                            <span class="input-icon"><i class="fas fa-map-marker-alt"></i></span>
+                            <input type="text" name="address" value="{{ user.address }}" class="form-control">
+                        </div>
+                        <div class="form-group mb-4 position-relative">
+                            <span class="input-icon"><i class="fas fa-calendar-alt"></i></span>
+                            <input type="date" name="dob" value="{{ user.dob }}" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mb-3">Update</button>
+                    </form>
+                </div>
             </div>
-            <div>
-                <label>Account Number:</label>
-                <input type="text" value="{{ user.account_number }}" disabled>
-            </div>
-            <div>
-                <label>Customer ID:</label>
-                <input type="text" value="{{ user.customer_id }}" disabled>
-            </div>
-            <div>
-                <label>Email:</label>
-                <input type="email" name="email" value="{{ user.email }}" required>
-            </div>
-            <div>
-                <label>Mobile Number:</label>
-                <input type="text" name="mobile_number" value="{{ user.mobile_number }}" required>
-            </div>
-            <button type="submit">Update</button>
-        </form>
+        </div>
     </div>
-</div>
-{% endblock %}
+
+    <!-- External JS Libraries -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

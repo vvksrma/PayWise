@@ -5,11 +5,18 @@
     <h1>Welcome, {{ user.username }}!</h1>
     <p>Your current balance: ₹{{ user.balance }}</p>
 
-    <h2>Your Features</h2>
+    <!-- Error Message Handling -->
+    <div id="errorMessage" class="alert alert-danger alert-dismissible fade show d-none" role="alert">
+        <span id="errorText"></span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
 
-    <div class="features-grid">
+    <h2>Your Features</h2>
+    <div class="features-grid my-3">
         <!-- Account Information Section -->
-        <div class="card">
+        <div class="card mb-3">
             <div class="card-header">
                 <strong>Account Information</strong>
             </div>
@@ -28,80 +35,32 @@
             </div>
         </div>
 
-        <!-- Withdraw Money Form -->
-        <div class="card">
-            <div class="card-header">
-                <strong>Withdraw Money</strong>
-            </div>
-            <div class="card-body">
-                <form method="POST">
-                    <div class="form-group">
-                        <label for="amount">Amount:</label>
-                        <input type="number" name="amount" id="amount" class="input-field" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="remarks">Remarks:</label>
-                        <input type="text" name="remarks" id="withdraw-remarks" class="input-field">
-                    </div>
-                    <button type="submit" name="withdraw" class="btn withdraw-btn">Withdraw</button>
-                </form>
-            </div>
-        </div>
+        <!-- Feature Buttons -->
 
-        <!-- Transfer Money Form -->
-        <div class="card">
-            <div class="card-header">
-                <strong>Transfer Money</strong>
-            </div>
-            <div class="card-body">
-                <form method="POST">
-                    <div class="form-group">
-                        <label for="recipient">Recipient Username:</label>
-                        <input type="text" name="recipient" id="recipient" class="input-field" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="amount">Amount:</label>
-                        <input type="number" name="amount" id="amount" class="input-field" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="remarks">Remarks:</label>
-                        <input type="text" name="remarks" id="transfer-remarks" class="input-field">
-                    </div>
-                    <button type="submit" name="transfer" class="btn transfer-btn">Transfer</button>
-                </form>
-            </div>
+        <div class="btn-group-vertical w-100 my-3">
+            <button type="button" class="btn btn-secondary d-flex align-items-center justify-content-between" data-toggle="modal" data-target="#withdrawModal">
+                <span>Withdraw Money</span>
+                <i data-lucide="arrow-down-circle"></i>
+            </button>
+            <button type="button" class="btn btn-secondary d-flex align-items-center justify-content-between" data-toggle="modal" data-target="#transferModal">
+                <span>Transfer Money</span>
+                <i data-lucide="arrow-right-circle"></i>
+            </button>
+            <button type="button" class="btn btn-secondary d-flex align-items-center justify-content-between" data-toggle="modal" data-target="#requestModal">
+                <span>Request Money</span>
+                <i data-lucide="arrow-up-circle"></i>
+            </button>
         </div>
-
-        <!-- Request Money Form -->
-        <div class="card">
-            <div class="card-header">
-                <strong>Request Money</strong>
-            </div>
-            <div class="card-body">
-                <form method="POST">
-                    <div class="form-group">
-                        <label for="recipient">Recipient Username:</label>
-                        <input type="text" name="recipient" id="request-recipient" class="input-field" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="amount">Amount:</label>
-                        <input type="number" name="amount" id="request-amount" class="input-field" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="remarks">Remarks:</label>
-                        <input type="text" name="remarks" id="request-remarks" class="input-field">
-                    </div>
-                    <button type="submit" name="request_money" class="btn request-btn">Request Money</button>
-                </form>
-            </div>
-        </div>
+    </div>
 
         <!-- Embedded Transaction Trend Graph -->
-        <div class="card">
-            <div class="card-header">
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center justify-content-between">
                 <h3 class="card-title">Transaction Trend Graph</h3>
-                <button id="minimizeGraphBtn" class="btn btn-sm btn-secondary">Minimize</button>
-                <button id="maximizeGraphBtn" class="btn btn-sm btn-secondary" style="display: none;">Maximize</button>
+                <div>
+                    <button id="minimizeGraphBtn" class="btn btn-sm btn-secondary">Minimize</button>
+                    <button id="maximizeGraphBtn" class="btn btn-sm btn-secondary" style="display: none;">Maximize</button>
+                </div>
             </div>
             <div id="graphContent" class="card-body">
                 <p class="card-text">
@@ -112,7 +71,6 @@
                 </div>
             </div>
         </div>
-    </div>
 
     <!-- Transaction History -->
     <h2>Your Transactions</h2>
@@ -196,13 +154,111 @@
     {% endif %}
 </div>
 
+<!-- Withdraw Money Modal -->
+<div class="modal fade" id="withdrawModal" tabindex="-1" role="dialog" aria-labelledby="withdrawModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="withdrawModalLabel">Withdraw Money</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form method="POST">
+                    <div class="form-group">
+                        <label for="amount">Amount:</label>
+                        <input type="number" name="amount" id="withdraw-amount" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="remarks">Remarks:</label>
+                        <input type="text" name="remarks" id="withdraw-remarks" class="form-control">
+                    </div>
+                    <button type="submit" name="withdraw" class="btn btn-primary">Withdraw</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transfer Money Modal -->
+<div class="modal fade" id="transferModal" tabindex="-1" role="dialog" aria-labelledby="transferModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="transferModalLabel">Transfer Money</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form method="POST">
+                    <div class="form-group">
+                        <label for="recipient">Recipient Username:</label>
+                        <input type="text" name="recipient" id="transfer-recipient" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="amount">Amount:</label>
+                        <input type="number" name="amount" id="transfer-amount" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="remarks">Remarks:</label>
+                        <input type="text" name="remarks" id="transfer-remarks" class="form-control">
+                    </div>
+                    <button type="submit" name="transfer" class="btn btn-primary">Transfer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Request Money Modal -->
+<div class="modal fade" id="requestModal" tabindex="-1" role="dialog" aria-labelledby="requestModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="requestModalLabel">Request Money</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form method="POST">
+                    <div class="form-group">
+                        <label for="recipient">Recipient Username:</label>
+                        <input type="text" name="recipient" id="request-recipient" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="amount">Amount:</label>
+                        <input type="number" name="amount" id="request-amount" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="remarks">Remarks:</label>
+                        <input type="text" name="remarks" id="request-remarks" class="form-control">
+                    </div>
+                    <button type="submit" name="request_money" class="btn btn-primary">Request Money</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Approve Confirmation Modal -->
-<div id="approveModal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeApproveModal()">&times;</span>
-        <p>Are you sure you want to approve this request?</p>
-        <button id="confirmApproveBtn" class="btn btn-success">Confirm</button>
-        <button class="btn btn-secondary" onclick="closeApproveModal()">Cancel</button>
+<div id="approveModal" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Approve Money Request</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to approve this request?</p>
+                <button id="confirmApproveBtn" class="btn btn-success">Confirm</button>
+                <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -217,12 +273,7 @@
 
     function showApproveModal(requestId) {
         requestToApprove = requestId;
-        document.getElementById('approveModal').style.display = 'block';
-    }
-
-    function closeApproveModal() {
-        requestToApprove = null;
-        document.getElementById('approveModal').style.display = 'none';
+        $('#approveModal').modal('show');
     }
 
     document.getElementById('confirmApproveBtn').addEventListener('click', function() {
@@ -237,14 +288,14 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Request approved.');
+                    showAlert('Request approved.', 'success');
                     location.reload(); // Reload the page to update the request status
                 } else {
-                    alert('Error approving request.');
+                    showAlert('Error approving request.', 'danger');
                 }
-                closeApproveModal();
+                $('#approveModal').modal('hide');
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => showAlert('Error: ' + error, 'danger'));
         }
     });
 
@@ -259,13 +310,13 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('Request declined.');
+                showAlert('Request declined.', 'success');
                 location.reload(); // Reload the page to update the request status
             } else {
-                alert('Error declining request.');
+                showAlert('Error declining request.', 'danger');
             }
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => showAlert('Error: ' + error, 'danger'));
     }
 
     document.getElementById('toggle-account').addEventListener('click', function() {
@@ -309,6 +360,8 @@
             }]
         },
         options: {
+            responsive: true,
+            maintainAspectRatio: false,
             scales: {
                 x: {
                     title: {
@@ -334,9 +387,7 @@
                     display: true,
                     position: 'top'
                 }
-            },
-            responsive: true,
-            maintainAspectRatio: false
+            }
         }
     });
 
@@ -383,9 +434,9 @@
             data.transactions.forEach(transaction => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${transaction.type.capitalize()}</td>
-                    <td class="transaction-amount ${transaction.type == 'credit' ? 'text-success' : 'text-danger'}">
-                        ${transaction.type == 'credit' ? '+' : '-'}₹${transaction.amount}
+                    <td>${transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}</td>
+                    <td class="transaction-amount ${transaction.type === 'credit' ? 'text-success' : 'text-danger'}">
+                        ${transaction.type === 'credit' ? '+' : '-'}₹${transaction.amount}
                     </td>
                     <td>${transaction.timestamp}</td>
                     <td>${transaction.remarks}</td>
@@ -393,7 +444,7 @@
                 transactionBody.appendChild(row);
             });
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => showAlert('Error: ' + error, 'danger'));
     }
 
     function filterRequests(startDate, endDate) {
@@ -408,13 +459,13 @@
                     <td>${request.sender.username}</td>
                     <td>₹${request.amount}</td>
                     <td>${request.timestamp}</td>
-                    <td>${request.status.capitalize()}</td>
+                    <td>${request.status.charAt(0).toUpperCase() + request.status.slice(1)}</td>
                     <td>${request.remarks}</td>
                     <td>
-                        ${request.status == 'pending' ? `
+                        ${request.status === 'pending' ? `
                             <button class="btn btn-success" onclick="showApproveModal('${request.id}')">Approve</button>
                             <button class="btn btn-danger" onclick="declineRequest('${request.id}')">Decline</button>
-                        ` : request.status == 'approved' ? 'Request Approved' : 'Request Declined'}
+                        ` : request.status === 'approved' ? 'Request Approved' : 'Request Declined'}
                     </td>
                 `;
                 requestBody.appendChild(row);
@@ -431,9 +482,9 @@
             data.transactions.forEach(transaction => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${transaction.type.capitalize()}</td>
-                    <td class="transaction-amount ${transaction.type == 'credit' ? 'text-success' : 'text-danger'}">
-                        ${transaction.type == 'credit' ? '+' : '-'}₹${transaction.amount}
+                    <td>${transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}</td>
+                    <td class="transaction-amount ${transaction.type === 'credit' ? 'text-success' : 'text-danger'}">
+                        ${transaction.type === 'credit' ? '+' : '-'}₹${transaction.amount}
                     </td>
                     <td>${transaction.timestamp}</td>
                     <td>${transaction.remarks}</td>
@@ -456,13 +507,13 @@
                     <td>${request.sender.username}</td>
                     <td>₹${request.amount}</td>
                     <td>${request.timestamp}</td>
-                    <td>${request.status.capitalize()}</td>
+                    <td>${request.status.charAt(0).toUpperCase() + request.status.slice(1)}</td>
                     <td>${request.remarks}</td>
                     <td>
-                        ${request.status == 'pending' ? `
+                        ${request.status === 'pending' ? `
                             <button class="btn btn-success" onclick="showApproveModal('${request.id}')">Approve</button>
                             <button class="btn btn-danger" onclick="declineRequest('${request.id}')">Decline</button>
-                        ` : request.status == 'approved' ? 'Request Approved' : 'Request Declined'}
+                        ` : request.status === 'approved' ? 'Request Approved' : 'Request Declined'}
                     </td>
                 `;
                 requestBody.appendChild(row);
@@ -471,7 +522,23 @@
         })
         .catch(error => console.error('Error:', error));
     }
-</script
+
+    function showAlert(message, type) {
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        errorText.textContent = message;
+        errorMessage.className = `alert alert-${type} alert-dismissible fade show`;
+        errorMessage.classList.remove('d-none');
+
+        // Auto-clear the error message after 1 minute with fade-out animation
+        setTimeout(() => {
+            $(errorMessage).fadeOut(1000, () => {
+                errorMessage.classList.add('d-none');
+                errorMessage.style.display = 'block'; // Reset display property
+            });
+        }, 60000);
+    }
+</script>
 
 <!-- Custom CSS to control the size and layout of the canvas element -->
 <style>

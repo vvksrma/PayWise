@@ -4,32 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PayWise | Secure Banking App</title>
+    
+
+    <!-- External CSS and Icon Libraries -->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/lucide@latest/dist/lucide.min.css">
 </head>
 <body>
-    <nav class="navbar">
-    <div class="container">
-        <a href="{{ url_for('home') }}" class="navbar-brand">
-            <img src="{{ url_for('static', filename='logo.png') }}" alt="PayWise Logo" class="logo">
-        </a>
-        <button class="navbar-toggler" id="navbar-toggler">
-            <span class="navbar-toggler-icon">&#9776;</span>
-        </button>
-        <div class="navbar-menu" id="navbar-menu">
-            <a href="{{ url_for('home') }}">Home</a>
-            {% if current_user.is_authenticated %}
-                <a href="{{ url_for('dashboard') }}">Dashboard</a>
-                <a href="{{ url_for('edit_profile') }}">Profile</a>
-                <a href="{{ url_for('logout') }}">Logout</a>
-                <a href="{{ url_for('chat') }}" class="chat-btn">Chat with AI</a>
-            {% else %}
-                <a href="{{ url_for('login') }}">Login</a>
-                <a href="{{ url_for('register') }}">Register</a>
-            {% endif %}
-        </div>
-    </div>
-</nav>
 
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="{{ url_for('home') }}" class="navbar-brand">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="PayWise Logo" class="logo">
+            </a>
+
+            <!-- Toggler Button for Mobile View -->
+            <button class="navbar-toggler" id="navbar-toggler">
+                <span class="navbar-toggler-icon">&#9776;</span>
+            </button>
+
+            <!-- Navbar Menu -->
+            <div class="navbar-menu" id="navbar-menu">
+                <a href="{{ url_for('home') }}">Home</a>
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                    <a href="{{ url_for('edit_profile') }}">Profile</a>
+                    <a href="{{ url_for('logout') }}">Logout</a>
+                    <a href="{{ url_for('chat') }}" class="chat-btn">Chat with AI</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}">Login</a>
+                    <a href="{{ url_for('register') }}">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
     <div class="container">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -40,9 +52,12 @@
                 </div>
             {% endif %}
         {% endwith %}
+
+        <!-- Content Block -->
         {% block content %}{% endblock %}
     </div>
 
+    <!-- Footer -->
     <footer>
         <div class="footer-section">
             <div class="container">
@@ -58,6 +73,19 @@
             </div>
         </div>
     </footer>
+
+    <!-- JavaScript Libraries and Scripts -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- Lucide Icons JS -->
+    <script src="https://unpkg.com/lucide@latest/dist/lucide.min.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+
+    <!-- Custom Navbar Toggle Script -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const toggler = document.getElementById('navbar-toggler');
@@ -68,5 +96,6 @@
             });
         });
     </script>
+
 </body>
 </html>
