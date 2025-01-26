@@ -1,6 +1,7 @@
 import random
 import string
 import os
+import logging
 import google.generativeai as genai
 from google.generativeai.types import generation_types
 from dotenv import load_dotenv
@@ -13,6 +14,28 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
 from sqlalchemy import CheckConstraint, UniqueConstraint
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadTimeSignature
+
+# Ensure the logs directory exists
+if not os.path.exists('logs'):
+    os.makedirs('logs')
+
+# Configure the logger
+logging.basicConfig(
+    filename='logs/app.log',  # Log file path
+    level=logging.DEBUG,      # Log level
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',  # Log format
+    datefmt='%Y-%m-%d %H:%M:%S'  # Date format
+)
+
+# Create a logger object
+logger = logging.getLogger(__name__)
+
+# Example usage of the logger
+logger.debug("This is a debug message.")
+logger.info("This is an info message.")
+logger.warning("This is a warning message.")
+logger.error("This is an error message.")
+logger.critical("This is a critical message.")
 
 # Load environment variables
 load_dotenv()

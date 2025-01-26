@@ -1,0 +1,52 @@
+2025-01-27 03:11:35 - __main__ - DEBUG - This is a debug message.
+2025-01-27 03:11:35 - __main__ - INFO - This is an info message.
+2025-01-27 03:11:35 - __main__ - WARNING - This is a warning message.
+2025-01-27 03:11:35 - __main__ - ERROR - This is an error message.
+2025-01-27 03:11:35 - __main__ - CRITICAL - This is a critical message.
+2025-01-27 03:11:35 - werkzeug - INFO -  * Restarting with stat
+2025-01-27 03:11:37 - __main__ - DEBUG - This is a debug message.
+2025-01-27 03:11:37 - __main__ - INFO - This is an info message.
+2025-01-27 03:11:37 - __main__ - WARNING - This is a warning message.
+2025-01-27 03:11:37 - __main__ - ERROR - This is an error message.
+2025-01-27 03:11:37 - __main__ - CRITICAL - This is a critical message.
+2025-01-27 03:11:37 - werkzeug - WARNING -  * Debugger is active!
+2025-01-27 03:11:37 - werkzeug - INFO -  * Debugger PIN: 651-104-494
+2025-01-27 03:11:37 - werkzeug - INFO -  * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
+2025-01-27 03:12:06 - werkzeug - INFO - 127.0.0.1 - - [27/Jan/2025 03:12:06] "GET / HTTP/1.1" 200 -
+2025-01-27 03:12:06 - werkzeug - INFO - 127.0.0.1 - - [27/Jan/2025 03:12:06] "[36mGET /static/styles.css HTTP/1.1[0m" 304 -
+2025-01-27 03:12:06 - werkzeug - INFO - 127.0.0.1 - - [27/Jan/2025 03:12:06] "[36mGET /static/logo.png HTTP/1.1[0m" 304 -
+2025-01-27 03:12:06 - werkzeug - INFO - 127.0.0.1 - - [27/Jan/2025 03:12:06] "[36mGET /static/images/secure.png HTTP/1.1[0m" 304 -
+2025-01-27 03:12:06 - werkzeug - INFO - 127.0.0.1 - - [27/Jan/2025 03:12:06] "[36mGET /static/images/support.png HTTP/1.1[0m" 304 -
+2025-01-27 03:12:06 - werkzeug - INFO - 127.0.0.1 - - [27/Jan/2025 03:12:06] "[36mGET /static/images/easy.png HTTP/1.1[0m" 304 -
+2025-01-27 03:12:06 - werkzeug - INFO - 127.0.0.1 - - [27/Jan/2025 03:12:06] "[36mGET /static/images/graph.png HTTP/1.1[0m" 304 -
+2025-01-27 03:12:06 - werkzeug - INFO - 127.0.0.1 - - [27/Jan/2025 03:12:06] "[36mGET /static/images/ai_budget.png HTTP/1.1[0m" 304 -
+2025-01-27 03:12:09 - werkzeug - INFO - 127.0.0.1 - - [27/Jan/2025 03:12:09] "GET /login HTTP/1.1" 200 -
+2025-01-27 03:12:18 - werkzeug - INFO - 127.0.0.1 - - [27/Jan/2025 03:12:18] "POST /login HTTP/1.1" 200 -
+2025-01-27 03:12:21 - werkzeug - INFO - 127.0.0.1 - - [27/Jan/2025 03:12:21] "GET / HTTP/1.1" 200 -
+2025-01-27 03:12:21 - werkzeug - INFO - 127.0.0.1 - - [27/Jan/2025 03:12:21] "[36mGET /static/styles.css HTTP/1.1[0m" 304 -
+2025-01-27 03:12:21 - werkzeug - INFO - 127.0.0.1 - - [27/Jan/2025 03:12:21] "[36mGET /static/logo.png HTTP/1.1[0m" 304 -
+2025-01-27 03:12:21 - werkzeug - INFO - 127.0.0.1 - - [27/Jan/2025 03:12:21] "[36mGET /static/images/secure.png HTTP/1.1[0m" 304 -
+2025-01-27 03:12:21 - werkzeug - INFO - 127.0.0.1 - - [27/Jan/2025 03:12:21] "[36mGET /static/images/easy.png HTTP/1.1[0m" 304 -
+2025-01-27 03:12:21 - werkzeug - INFO - 127.0.0.1 - - [27/Jan/2025 03:12:21] "[36mGET /static/images/support.png HTTP/1.1[0m" 304 -
+2025-01-27 03:12:21 - werkzeug - INFO - 127.0.0.1 - - [27/Jan/2025 03:12:21] "[36mGET /static/images/graph.png HTTP/1.1[0m" 304 -
+2025-01-27 03:12:21 - werkzeug - INFO - 127.0.0.1 - - [27/Jan/2025 03:12:21] "[36mGET /static/images/ai_budget.png HTTP/1.1[0m" 304 -
+2025-01-27 03:12:33 - __main__ - DEBUG - This is a debug message.
+2025-01-27 03:12:33 - __main__ - INFO - This is an info message.
+2025-01-27 03:12:33 - __main__ - WARNING - This is a warning message.
+2025-01-27 03:12:33 - __main__ - ERROR - This is an error message.
+2025-01-27 03:12:33 - __main__ - CRITICAL - This is a critical message.
+2025-01-27 03:12:33 - werkzeug - INFO -  * Restarting with stat
+2025-01-27 03:12:50 - __main__ - DEBUG - This is a debug message.
+2025-01-27 03:12:50 - __main__ - INFO - This is an info message.
+2025-01-27 03:12:50 - __main__ - WARNING - This is a warning message.
+2025-01-27 03:12:50 - __main__ - ERROR - This is an error message.
+2025-01-27 03:12:50 - __main__ - CRITICAL - This is a critical message.
+2025-01-27 03:12:50 - werkzeug - INFO -  * Restarting with stat
+2025-01-27 03:12:52 - __main__ - DEBUG - This is a debug message.
+2025-01-27 03:12:52 - __main__ - INFO - This is an info message.
+2025-01-27 03:12:52 - __main__ - WARNING - This is a warning message.
+2025-01-27 03:12:52 - __main__ - ERROR - This is an error message.
+2025-01-27 03:12:52 - __main__ - CRITICAL - This is a critical message.
+2025-01-27 03:12:52 - werkzeug - WARNING -  * Debugger is active!
+2025-01-27 03:12:52 - werkzeug - INFO -  * Debugger PIN: 651-104-494
+2025-01-27 03:12:53 - werkzeug - INFO -  * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
