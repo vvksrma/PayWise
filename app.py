@@ -1,9 +1,10 @@
 import random
 import string
-import io
-import base64
 import os
-from datetime import datetime
+import google.generativeai as genai
+from google.generativeai.types import generation_types
+from dotenv import load_dotenv
+from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -13,10 +14,41 @@ from flask_migrate import Migrate
 from sqlalchemy import CheckConstraint, UniqueConstraint
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadTimeSignature
 
+# Load environment variables
+load_dotenv()
+
+# Configure Google Generative AI
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
+# Function to load Gemini Pro model and get response
+model = genai.GenerativeModel("gemini-pro")
+
+def get_financial_response(question):
+    # Contextual prompt to ensure the model responds as a financial expert
+    prompt = f"You are a financial expert. Answer the following question: {question}"
+    try:
+        # Create a new chat session for each request
+        chat = model.start_chat(history=[])
+        response = chat.send_message(prompt)
+        return response.text  # Adjust this line according to the actual response structure
+    except generation_types.StopCandidateException as e:
+        # Log the error and return a user-friendly message
+        print(f"StopCandidateException Error: {e}")
+        return "I'm sorry, but I couldn't generate a response to your question. Please try again."
+    except Exception as e:
+        # Catch any other exceptions and log them
+        print(f"Unexpected Error: {e}")
+        return "An unexpected error occurred. Please try again later."
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bank.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)  # Ensure upload folder exists
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -47,11 +79,11 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(100), unique=True, nullable=False)
     mobile_number = db.Column(db.String(15), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    balance = db.Column(db.Float, default=100000.0)  # Set initial balance to ₹100,000
+    balance = db.Column(db.Float, default=100000.0)
     account_number = db.Column(db.String(12), unique=True, nullable=False, default=generate_account_number)
     customer_id = db.Column(db.String(6), unique=True, nullable=False, default=generate_customer_id)
-    dob = db.Column(db.Date, nullable=True)  # Date of Birth column
-    profile_picture = db.Column(db.String(200), nullable=True)  # Profile Picture column
+    dob = db.Column(db.Date, nullable=True)
+    profile_picture = db.Column(db.String(200), nullable=True)
     transactions = db.relationship('Transaction', back_populates='user', lazy=True)
 
     __table_args__ = (
@@ -66,7 +98,7 @@ class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     amount = db.Column(db.Float, nullable=False)
-    type = db.Column(db.String(10), nullable=False)  # 'debit', 'credit'
+    type = db.Column(db.String(10), nullable=False)
     timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
     remarks = db.Column(db.String(255))
 
@@ -97,52 +129,74 @@ class MoneyRequest(db.Model):
 def home():
     return render_template('index.html')
 
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+@app.route('/contact')
+def contact():  
+    return render_template('contact.html')
+
+@app.route('/privacy')  
+def privacy():  
+    return render_template('privacy.html')
+
+@app.route('/terms')
+def terms():  
+    return render_template('terms.html')   
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        profile_picture_file = request.files.get('profile_picture')
-        full_name = request.form.get('full_name')
-        username = request.form.get('username')
-        dob = request.form.get('dob')
-        email = request.form.get('email')
-        mobile_number = request.form.get('mobile_number')
-        password = request.form.get('password')
+        try:
+            profile_picture_file = request.files.get('profile_picture')
+            full_name = request.form.get('full_name')
+            username = request.form.get('username')
+            dob = request.form.get('dob')
+            email = request.form.get('email')
+            mobile_number = request.form.get('mobile_number')
+            password = request.form.get('password')
 
-        if profile_picture_file:
-            profile_picture_filename = secure_filename(profile_picture_file.filename)
-            profile_picture_path = os.path.join(app.config['UPLOAD_FOLDER'], profile_picture_filename)
-            profile_picture_file.save(profile_picture_path)
-        else:
-            profile_picture_path = None
+            if profile_picture_file and profile_picture_file.filename:
+                filename = secure_filename(profile_picture_file.filename)
+                profile_picture_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                profile_picture_file.save(profile_picture_path)
+                profile_picture = filename
+            else:
+                profile_picture = None
 
-        dob_parsed = datetime.strptime(dob, '%Y-%m-%d').date() if dob else None
+            dob_parsed = datetime.strptime(dob, '%Y-%m-%d').date() if dob else None
 
-        if User.query.filter_by(username=username).first():
-            flash('Username already exists. Please choose another one.', 'error')
+            if User.query.filter_by(username=username).first():
+                flash('Username already exists. Please choose another one.', 'error')
+                return redirect(url_for('register'))
+
+            if User.query.filter_by(email=email).first():
+                flash('Email already exists. Please choose another one.', 'error')
+                return redirect(url_for('register'))
+
+            if User.query.filter_by(mobile_number=mobile_number).first():
+                flash('Mobile number already exists. Please choose another one.', 'error')
+                return redirect(url_for('register'))
+
+            hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+            new_user = User(
+                profile_picture=profile_picture,
+                full_name=full_name,
+                username=username,
+                dob=dob_parsed,
+                email=email,
+                mobile_number=mobile_number,
+                password=hashed_password
+            )
+            db.session.add(new_user)
+            db.session.commit()
+            flash('Registration successful! Please log in.', 'success')
+            return redirect(url_for('login'))
+
+        except Exception as e:
+            flash(f'Error during registration: {str(e)}', 'error')
             return redirect(url_for('register'))
-
-        if User.query.filter_by(email=email).first():
-            flash('Email already exists. Please choose another one.', 'error')
-            return redirect(url_for('register'))
-
-        if User.query.filter_by(mobile_number=mobile_number).first():
-            flash('Mobile number already exists. Please choose another one.', 'error')
-            return redirect(url_for('register'))
-
-        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-        new_user = User(
-            profile_picture=profile_picture_path,
-            full_name=full_name,
-            username=username,
-            dob=dob_parsed,
-            email=email,
-            mobile_number=mobile_number,
-            password=hashed_password
-        )
-        db.session.add(new_user)
-        db.session.commit()
-        flash('Registration successful! Please log in.', 'success')
-        return redirect(url_for('login'))
 
     return render_template('register.html')
 
@@ -215,59 +269,57 @@ def forgot_username():
 @login_required
 def dashboard():
     if request.method == 'POST':
-        if 'withdraw' in request.form:
-            amount = float(request.form.get('amount'))
-            remarks = request.form.get('remarks')
-            if current_user.balance < amount:
-                flash('Insufficient funds.', 'error')
-            else:
-                try:
-                    with db.session.begin():
-                        current_user.balance -= amount
-                        db.session.add(Transaction(user_id=current_user.id, amount=amount, type='debit', remarks=remarks))
-                        db.session.commit()
+        try:
+            if 'withdraw' in request.form:
+                amount = float(request.form.get('amount'))
+                remarks = request.form.get('remarks')
+                if current_user.balance < amount:
+                    flash('Insufficient funds.', 'error')
+                else:
+                    current_user.balance -= amount
+                    transaction = Transaction(user_id=current_user.id, amount=amount, type='debit', remarks=remarks)
+                    db.session.add(transaction)
+                    db.session.commit()
                     flash(f'Withdrew ₹{amount} successfully.', 'success')
-                except Exception as e:
-                    db.session.rollback()
-                    flash(f'Error during withdrawal: {str(e)}', 'error')
-        elif 'transfer' in request.form:
-            recipient_username = request.form.get('recipient')
-            amount = float(request.form.get('amount'))
-            remarks = request.form.get('remarks')
-            recipient = User.query.filter_by(username=recipient_username).first()
-            if not recipient:
-                flash('Recipient does not exist.', 'error')
-            elif current_user.balance < amount:
-                flash('Insufficient funds.', 'error')
-            else:
-                try:
-                    with db.session.begin():
-                        current_user.balance -= amount
-                        recipient.balance += amount
-                        debit_transaction = Transaction(user_id=current_user.id, amount=amount, type='debit', remarks=remarks)
-                        credit_transaction = Transaction(user_id=recipient.id, amount=amount, type='credit', remarks=remarks)
-                        db.session.add(debit_transaction)
-                        db.session.add(credit_transaction)
-                        db.session.commit()
-                        transfer = Transfer(debit_transaction_id=debit_transaction.id, credit_transaction_id=credit_transaction.id)
-                        db.session.add(transfer)
-                        db.session.commit()
+
+            elif 'transfer' in request.form:
+                recipient_username = request.form.get('recipient')
+                amount = float(request.form.get('amount'))
+                remarks = request.form.get('remarks')
+                recipient = User.query.filter_by(username=recipient_username).first()
+                if not recipient:
+                    flash('Recipient does not exist.', 'error')
+                elif current_user.balance < amount:
+                    flash('Insufficient funds.', 'error')
+                else:
+                    current_user.balance -= amount
+                    recipient.balance += amount
+                    debit_transaction = Transaction(user_id=current_user.id, amount=amount, type='debit', remarks=remarks)
+                    credit_transaction = Transaction(user_id=recipient.id, amount=amount, type='credit', remarks=remarks)
+                    db.session.add(debit_transaction)
+                    db.session.add(credit_transaction)
+                    db.session.commit()
+                    transfer = Transfer(debit_transaction_id=debit_transaction.id, credit_transaction_id=credit_transaction.id)
+                    db.session.add(transfer)
+                    db.session.commit()
                     flash(f'Transferred ₹{amount} to {recipient_username}.', 'success')
-                except Exception as e:
-                    db.session.rollback()
-                    flash(f'Error during transfer: {str(e)}', 'error')
-        elif 'request_money' in request.form:
-            recipient_username = request.form.get('recipient')
-            amount = float(request.form.get('amount'))
-            remarks = request.form.get('remarks')
-            recipient = User.query.filter_by(username=recipient_username).first()
-            if not recipient:
-                flash('Recipient does not exist.', 'error')
-            else:
-                money_request = MoneyRequest(sender_id=current_user.id, recipient_id=recipient.id, amount=amount, remarks=remarks)
-                db.session.add(money_request)
-                db.session.commit()
-                flash(f'Requested ₹{amount} from {recipient_username}.', 'info')
+
+            elif 'request_money' in request.form:
+                recipient_username = request.form.get('recipient')
+                amount = float(request.form.get('amount'))
+                remarks = request.form.get('remarks')
+                recipient = User.query.filter_by(username=recipient_username).first()
+                if not recipient:
+                    flash('Recipient does not exist.', 'error')
+                else:
+                    money_request = MoneyRequest(sender_id=current_user.id, recipient_id=recipient.id, amount=amount, remarks=remarks)
+                    db.session.add(money_request)
+                    db.session.commit()
+                    flash(f'Requested ₹{amount} from {recipient_username}.', 'info')
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error during operation: {str(e)}', 'error')
 
     transactions = Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.timestamp.desc()).all()
     money_requests = MoneyRequest.query.filter_by(recipient_id=current_user.id).all()
@@ -275,7 +327,7 @@ def dashboard():
     # Data for the interactive graph
     dates = [transaction.timestamp.strftime('%Y-%m-%d') for transaction in transactions]
     balances = []
-    balance = current_user.balance
+    balance = 100000.0  # Initial balance, you can replace it with the actual initial balance
     for transaction in transactions:
         if transaction.type == 'credit':
             balance += transaction.amount
@@ -285,10 +337,10 @@ def dashboard():
 
     return render_template('dashboard.html', user=current_user, transactions=transactions, money_requests=money_requests, dates=dates, balances=balances)
 
-@app.route('/balance_graph', methods=['GET'])
+@app.route('/balance_graph')
 @login_required
 def balance_graph():
-    return render_template('balance_graph.html')
+    balance_graph()
 
 @app.route('/approve_request/<int:request_id>', methods=['POST'])
 @login_required
@@ -369,10 +421,20 @@ def logout():
     flash('Logged out successfully.', 'success')
     return redirect(url_for('login'))
 
+# New route to serve the chat page
 @app.route('/chat')
-@login_required
 def chat():
     return render_template('chat.html')
+
+# New route to handle chatbot responses
+@app.route('/get_response', methods=['POST'])
+def chat_response():
+    data = request.get_json()
+    user_input = data.get('message')
+    if user_input:
+        response = get_financial_response(user_input)
+        return jsonify({"response": response})
+    return jsonify({"response": "No input provided"}), 400
 
 @app.route('/filter_transactions')
 @login_required

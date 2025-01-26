@@ -1,4 +1,3 @@
-// static/chat.js
 document.getElementById('send-btn').addEventListener('click', sendMessage);
 document.getElementById('chat-input').addEventListener('keypress', function(event) {
     if (event.key === 'Enter') {
@@ -12,30 +11,52 @@ function sendMessage() {
     if (message) {
         displayMessage(message, 'user');
         input.value = '';
-        // Simulate AI response (replace with actual AI call)
-        setTimeout(function() {
-            displayMessage("I'm here to help! What do you need assistance with?", 'ai');
-        }, 1000);
-    }
-}
 
-function selectOption(option) {
-    displayMessage(`Selected option: ${option}`, 'user');
-    setTimeout(function() {
-        displayMessage(`You chose ${option}. Please provide more details or ask your question.`, 'ai');
-    }, 1000);
+        // Add loading animation
+        var loadingAnimation = document.createElement('div');
+        loadingAnimation.classList.add('loading');
+        loadingAnimation.innerHTML = '<span></span><span></span><span></span>';
+        var chatMessages = document.getElementById('chat-messages');
+        chatMessages.appendChild(loadingAnimation);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        // Send the message to the backend to get an AI response
+        fetch('/get_response', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: message })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Remove loading animation
+            chatMessages.removeChild(loadingAnimation);
+            displayMessage(data.response, 'ai');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            chatMessages.removeChild(loadingAnimation);
+            displayMessage("Sorry, I couldn't process your request. Please try again later.", 'ai');
+        });
+    }
 }
 
 function displayMessage(message, sender) {
     var chatMessages = document.getElementById('chat-messages');
     var messageElement = document.createElement('div');
     messageElement.classList.add('chat-message');
-    if (sender === 'user') {
-        messageElement.classList.add('user');
-    } else {
-        messageElement.classList.add('ai');
-    }
-    messageElement.innerHTML = message;
+    messageElement.classList.add(sender);
+
+    var messageContent = document.createElement('p');
+    messageContent.innerHTML = formatMessage(message);
+    messageElement.appendChild(messageContent);
+
     chatMessages.appendChild(messageElement);
     chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function formatMessage(message) {
+    // Replace **text** with <strong>text</strong>
+    return message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
 }

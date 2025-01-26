@@ -8,10 +8,9 @@
     <!-- Error Message Handling -->
     <div id="errorMessage" class="alert alert-danger alert-dismissible fade show d-none" role="alert">
         <span id="errorText"></span>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
+    
 
     <h2>Your Features</h2>
     <div class="features-grid my-3">
@@ -524,20 +523,34 @@
     }
 
     function showAlert(message, type) {
-        const errorMessage = document.getElementById('errorMessage');
-        const errorText = document.getElementById('errorText');
-        errorText.textContent = message;
-        errorMessage.className = `alert alert-${type} alert-dismissible fade show`;
-        errorMessage.classList.remove('d-none');
+    const errorMessage = document.getElementById('errorMessage');
+    const errorText = document.getElementById('errorText');
 
-        // Auto-clear the error message after 1 minute with fade-out animation
-        setTimeout(() => {
-            $(errorMessage).fadeOut(1000, () => {
-                errorMessage.classList.add('d-none');
-                errorMessage.style.display = 'block'; // Reset display property
-            });
-        }, 60000);
+    // Set the alert message and type
+    errorText.textContent = message;
+    errorMessage.className = `alert alert-${type} alert-dismissible fade show`;
+    errorMessage.classList.remove('d-none');
+
+    // Add the dismiss button if not already present
+    if (!errorMessage.querySelector('.btn-close')) {
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = 'btn-close';
+        closeButton.setAttribute('aria-label', 'Close');
+        closeButton.addEventListener('click', () => {
+            errorMessage.classList.add('d-none');
+        });
+        errorMessage.appendChild(closeButton);
     }
+
+    // Auto-clear the error message after 1 minute with fade-out animation
+    setTimeout(() => {
+        $(errorMessage).fadeOut(1000, () => {
+            errorMessage.classList.add('d-none');
+            errorMessage.style.display = 'block'; // Reset display property
+        });
+    }, 60000);
+}
 </script>
 
 <!-- Custom CSS to control the size and layout of the canvas element -->

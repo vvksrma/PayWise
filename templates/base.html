@@ -5,27 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PayWise | Secure Banking App</title>
     
-
     <!-- External CSS and Icon Libraries -->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/lucide@latest/dist/lucide.min.css">
 </head>
 <body>
-
-    <!-- Navbar -->
     <nav class="navbar">
         <div class="container">
             <a href="{{ url_for('home') }}" class="navbar-brand">
                 <img src="{{ url_for('static', filename='logo.png') }}" alt="PayWise Logo" class="logo">
             </a>
-
-            <!-- Toggler Button for Mobile View -->
             <button class="navbar-toggler" id="navbar-toggler">
                 <span class="navbar-toggler-icon">&#9776;</span>
             </button>
-
-            <!-- Navbar Menu -->
             <div class="navbar-menu" id="navbar-menu">
                 <a href="{{ url_for('home') }}">Home</a>
                 {% if current_user.is_authenticated %}
@@ -38,7 +31,6 @@
                     <a href="{{ url_for('register') }}">Register</a>
                 {% endif %}
             </div>
-        </div>
     </nav>
 
     <!-- Flash Messages -->
@@ -63,6 +55,7 @@
             <div class="container">
                 <div class="footer-content">
                     <p>&copy; 2025 PayWise. All rights reserved.</p>
+                    <p>This project is developed by Vivek Sharma. Connect with me on <a href="https://www.linkedin.com/in/hello-vivek" target="_blank">LinkedIn</a>.</p>
                     <ul class="footer-links">
                         <li><a href="/about">About Us</a></li>
                         <li><a href="/contact">Contact</a></li>
