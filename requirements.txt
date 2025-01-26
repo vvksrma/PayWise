@@ -1,9 +1,0 @@
-Flask
-Flask-SQLAlchemy
-Flask-Login
-Flask-Migrate
-python-dotenv
-Werkzeug
-SQLAlchemy
-itsdangerous
-google-generativeai

@@ -1,0 +1,17 @@
+# .dockerignore or .gitignore
+.git
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.log
+*.bak
+*.swp
+*.tmp
+coverage/
+dist/
+build/
+*.egg-info/
+venv/
